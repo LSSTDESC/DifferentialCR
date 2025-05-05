@@ -1,0 +1,12 @@
+# Ignore a specific large file
+# large_file.mov
+
+# Ignore a folder
+# /data/large_files/
+
+# Ignore all .zip files
+*.db
+*.zip
+
+# Ignore all files in a specific path
+# outputs/temp_results/
