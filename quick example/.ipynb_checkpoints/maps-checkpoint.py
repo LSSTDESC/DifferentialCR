@@ -27,10 +27,18 @@ import os
 os.makedirs(outdir, exist_ok=True)
 
 def find_average_wavelength(filter_file, wavelengths, directory, cutoff = 8005):
-    wavelengths = np.linspace(300, 1100, len(wavelengths))
+    '''
+    Returns the wavelength closest to the middle of a filter for a given filter 
+    
+    filter_file: txt file with two columns for the wavelength and throughput of each filter
+    wavelengths: array of wavelengths from which you return the value closest to the middle of the chosen filter
+
+    '''
+    wavelengths = np.linspace(300, 1100, len(wavelengths)) 
+    #it looks like this makes pretty much the same thing as the wavelengths object passed in?
 
     data = read_filter_data_from_directory(directory, filter_file)
-    wavelength = data[:(cutoff + 1), 0]
+    wavelength = data[:(cutoff + 1), 0] #remove some stuff at the high end?
     throughput = data[:(cutoff + 1), 1]
     fwhm, left_wavelength, right_wavelength, left_idx, right_idx = calculate_fwhm(wavelength, throughput)
 
@@ -38,7 +46,14 @@ def find_average_wavelength(filter_file, wavelengths, directory, cutoff = 8005):
     avg_idx_new = find_nearest_index(wavelengths, avg_wavelength)
     return wavelengths[avg_idx_new]
 
+
+
+#find the difference in angle of refraction from one end of filter to other end. (Uses calculate_fwhm function)
+#(filter_files is a list of names of each file that contains the filter throughputs)
+#directory is the directory that contains the filter files
+#airmasses is an arbitrary array of airmass values
 def calculate_filter_refractions(filter_files, directory, airmasses, dcr = True, cutoff = 8005):
+    
     wavelengths = np.linspace(300, 1100, len(airmasses))
     zeniths = []
     for airmass in airmasses:
@@ -62,6 +77,7 @@ def calculate_filter_refractions(filter_files, directory, airmasses, dcr = True,
     filter_refractions = []
 
     for i, filter_file in enumerate(filter_files):
+        #Seems like this information about the filters should just be saved once and referred back to
         data = read_filter_data_from_directory(directory, filter_file)
         wavelength = data[:(cutoff + 1), 0]
         throughput = data[:(cutoff + 1), 1]
@@ -189,7 +205,13 @@ def apply_cosmology_cuts():
     bundle_grp.run_all()
     return bundle_exgal.metric_values
 
+
+#calculates a quantile. uses cursor to extract specific visits from OpSim database (airmass.ipnyb notebook shows how to extract data from notebook).
+#thank you Theo for showing me how to!
 def calculate_quartile(opsim_fname, fraction = 0.5, filter = None):
+    '''
+    Returns a map of airmass values at the specified fraction quantile 
+    '''
     # open a connection to the database file
     con = sqlite3.connect(opsim_fname)
     cur = con.cursor()
@@ -301,8 +323,14 @@ def am2deg(am):
 #######################################MAKE ELLIPTICITY PLOTS##############################################################
 # Create a figure for the subplots (5 rows, 3 columns)
 fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(12, 10), constrained_layout=False) #12, 10 may be the best
-opsim_fname = get_baseline()
-directory = 'path/to/filter_files' #MUST CHANGE
+
+opsim_fname = get_baseline() #Look at this, didn't work 
+print(opsim_fname)
+# opsim_fname = '/Users/msredden/Documents/DESC/DifferentialCR/db files/baseline_v4.3.2_10yrs.db'
+
+
+# directory = '/Documents/DESC/matthew_resources/filter_files'
+directory = '/Documents/DESC/DifferentialCR/filter_files' #MUST CHANGE
 filter_files = ['total_u.dat', 'total_g.dat', 'total_r.dat', 'total_i.dat', 'total_z.dat', 'total_y.dat']
 filters = ['u', 'g', 'r', 'i']
 quartiles = [.50, .75, .95]
@@ -310,7 +338,7 @@ quartiles = [.50, .75, .95]
 for i, filter in enumerate(filters):
     # Dictionary to map filter letters to their index
     filter_map = {'u': 0, 'g': 1, 'r': 2, 'i': 3}
-    filter_file_index = filter_map.get(filter, 0)
+    filter_file_index = filter_map.get(filter, 0) #return the index of the filter if in filter_map, otherwise return 0 --> u?
     
     for j, nth_quartile in enumerate(quartiles):
         # Calculate median_gi_map and g_shear for the given quartile and filter

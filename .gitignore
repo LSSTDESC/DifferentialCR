@@ -1,5 +1,5 @@
-# Ignore a specific large file
-# large_file.mov
+# Ignore a scrap notebook used for local testing
+scrap.ipynb
 
 # Ignore a folder
 # /data/large_files/

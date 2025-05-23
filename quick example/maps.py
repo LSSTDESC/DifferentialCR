@@ -125,7 +125,7 @@ def read_filter_data_from_directory(directory, filter_file):
 
 def calculate_refraction_and_seeing_effects(filter_files, directory, airmasses, calc_type = None, airmass_seeing = True, 
                                             wavelength_seeing = True, dcr = True, cutoff = 8005):
-    wavelengths = np.linspace(300,1100, len(airmasses))
+    wavelengths = np.linspace(300,1100, len(airmasses)) #Why length of airmasses here?
     # seeing effects:
     if airmass_seeing == True:
         airmass_seeing = airmasses ** (0.6) #added seeing effect (will do first since seeing + dcr isn't commutative)
@@ -323,8 +323,14 @@ def am2deg(am):
 #######################################MAKE ELLIPTICITY PLOTS##############################################################
 # Create a figure for the subplots (5 rows, 3 columns)
 fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(12, 10), constrained_layout=False) #12, 10 may be the best
-opsim_fname = get_baseline() #Look at this
-directory = '/Documents/DESC/matthew_resources/filter_files' #MUST CHANGE
+
+opsim_fname = get_baseline() #Look at this, didn't work 
+print(opsim_fname)
+# opsim_fname = '/Users/msredden/Documents/DESC/DifferentialCR/db files/baseline_v4.3.2_10yrs.db'
+
+
+# directory = '/Documents/DESC/matthew_resources/filter_files'
+directory = '/Documents/DESC/DifferentialCR/filter_files' #MUST CHANGE
 filter_files = ['total_u.dat', 'total_g.dat', 'total_r.dat', 'total_i.dat', 'total_z.dat', 'total_y.dat']
 filters = ['u', 'g', 'r', 'i']
 quartiles = [.50, .75, .95]
