@@ -6,7 +6,7 @@ It has been uploaded to GitHub and further modified by Maya Redden (msredden@sta
 ## Notebooks
 - `SEDAnalysis.ipynb` 
     - Propagates stellar and galactic SEDs through filter bands and then to distributions of refraction angle due to DCR (dN/dR).
-    - Shows the distribution of DCR measurables (mean refraction angle E(R) and distribution dN/dR widths) for the set SEDs.
+    - Shows the distribution of DCR measurables (mean refraction angle E[R] and distribution dN/dR widths) for the set SEDs.
     - Attempts to show relationship between in-band SED slope and mean refraction angle within that band.
 - `DCRSecondStacker.ipynb`
     - Used for developing and testing a new MAF stacker class that will add a column(s) to OpSim .db files with estimated DCR second moment additive biases for an "average" galaxy.
