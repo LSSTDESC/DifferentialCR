@@ -1,5 +1,8 @@
 Repository for developing and testing code to calculate differential chromatic refraction effects on survey data. 
 
+Notebooks of use:
+- 
+
 This repository is based on a project completed by Matthew Lugatiman (contact details below). 
 It has been uploaded to GitHub and further modified by Maya Redden (msredden@stanford.edu).
 
@@ -7,7 +10,7 @@ The "baseline_v3.3_10yrs.db" file used in airmass.ipynb (and other .db files) ca
 --> sims_featureScheduler_runs3.3/baseline/baseline_v3.3_10yrs.db
 
 
-## Data
+Data
 
 Simulated galaxy and stellar SEDs are used to evaluate DCR 
 
