@@ -26,6 +26,8 @@ outdir = 'test'
 import os
 os.makedirs(outdir, exist_ok=True)
 
+import time
+
 def find_average_wavelength(filter_file, wavelengths, directory, cutoff = 8005):
     '''
     Returns the wavelength closest to the middle of a filter for a given filter 
@@ -54,7 +56,7 @@ def find_average_wavelength(filter_file, wavelengths, directory, cutoff = 8005):
 #airmasses is an arbitrary array of airmass values
 def calculate_filter_refractions(filter_files, directory, airmasses, dcr = True, cutoff = 8005):
     
-    wavelengths = np.linspace(300, 1100, len(airmasses))
+    wavelengths = np.linspace(300, 1100, 16000)# len(airmasses))
     zeniths = []
     for airmass in airmasses:
         if airmass > 0:
@@ -125,7 +127,7 @@ def read_filter_data_from_directory(directory, filter_file):
 
 def calculate_refraction_and_seeing_effects(filter_files, directory, airmasses, calc_type = None, airmass_seeing = True, 
                                             wavelength_seeing = True, dcr = True, cutoff = 8005):
-    wavelengths = np.linspace(300,1100, len(airmasses))
+    wavelengths = np.linspace(300,1100, len(airmasses)) #Why length of airmasses here?
     # seeing effects:
     if airmass_seeing == True:
         airmass_seeing = airmasses ** (0.6) #added seeing effect (will do first since seeing + dcr isn't commutative)
@@ -216,6 +218,7 @@ def calculate_quartile(opsim_fname, fraction = 0.5, filter = None):
     con = sqlite3.connect(opsim_fname)
     cur = con.cursor()
 
+    #---- Note: query used to search the 'note' column which has been renamed to scheduler_note'
     # Query to get RA, Dec, and airmass of all observations
     if filter == None:
         res = cur.execute(f"""
@@ -227,10 +230,10 @@ def calculate_quartile(opsim_fname, fraction = 0.5, filter = None):
                 observations
             WHERE
                 target_name = ''
-                and not (note = 'twilight_near_sun, 0'
-                or note = 'twilight_near_sun, 1'
-                or note = 'twilight_near_sun, 2'
-                or note = 'twilight_near_sun, 3')
+                and not (scheduler_note = 'twilight_near_sun, 0'
+                or scheduler_note = 'twilight_near_sun, 1'
+                or scheduler_note = 'twilight_near_sun, 2'
+                or scheduler_note = 'twilight_near_sun, 3')
         """)
     else:
         res = cur.execute(f"""
@@ -242,10 +245,10 @@ def calculate_quartile(opsim_fname, fraction = 0.5, filter = None):
                 observations
             WHERE
                 target_name = '' and filter = '{filter}'
-                and not (note = 'twilight_near_sun, 0'
-                or note = 'twilight_near_sun, 1'
-                or note = 'twilight_near_sun, 2'
-                or note = 'twilight_near_sun, 3')
+                and not (scheduler_note = 'twilight_near_sun, 0'
+                or scheduler_note = 'twilight_near_sun, 1'
+                or scheduler_note = 'twilight_near_sun, 2'
+                or scheduler_note = 'twilight_near_sun, 3')
         """)
     data = np.array(res.fetchall())
     #START
@@ -321,6 +324,9 @@ def am2deg(am):
 
 
 #######################################MAKE ELLIPTICITY PLOTS##############################################################
+
+start_time = time.time()
+
 # Create a figure for the subplots (5 rows, 3 columns)
 fig, axs = plt.subplots(nrows=5, ncols=3, figsize=(12, 10), constrained_layout=False) #12, 10 may be the best
 
@@ -330,10 +336,10 @@ print(opsim_fname)
 
 
 # directory = '/Documents/DESC/matthew_resources/filter_files'
-directory = '/Documents/DESC/DifferentialCR/filter_files' #MUST CHANGE
+directory = '/Users/msredden/Documents/DESC/DifferentialCR/filter_files' #MUST CHANGE
 filter_files = ['total_u.dat', 'total_g.dat', 'total_r.dat', 'total_i.dat', 'total_z.dat', 'total_y.dat']
 filters = ['u', 'g', 'r', 'i']
-quartiles = [.50, .75, .95]
+quartiles = [.50 , .75, .95]
 
 for i, filter in enumerate(filters):
     # Dictionary to map filter letters to their index
@@ -343,10 +349,14 @@ for i, filter in enumerate(filters):
     for j, nth_quartile in enumerate(quartiles):
         # Calculate median_gi_map and g_shear for the given quartile and filter
         median_gi_map = calculate_quartile(opsim_fname, fraction=quartiles[j], filter=filter)
+
+        time_i = time.time()
         g_shear = calculate_refraction_and_seeing_effects(filter_files, directory, 
                                                               airmass_seeing=True, wavelength_seeing=True, 
                                                               dcr=True, airmasses=median_gi_map, calc_type='g_shear')
-        
+
+        time_f = time.time()
+        print(f'intermediate duration: {time_f - time_i}')
         # Select the correct subplot
         ax = axs[i, j]
         plt.sca(ax)  # Set current axis
@@ -377,6 +387,8 @@ cbar.set_label('Ellipticity')
 
 plt.subplots_adjust(bottom=0.15)
 
+print(f'total run time: {time.time() - start_time}')
 # Save and show the figure
 plt.show()
+fig.savefig('test-og.png')
 ############################################################################################################

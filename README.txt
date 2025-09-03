@@ -6,6 +6,11 @@ It has been uploaded to GitHub and further modified by Maya Redden (msredden@sta
 The "baseline_v3.3_10yrs.db" file used in airmass.ipynb (and other .db files) can be found at https://s3df.slac.stanford.edu/data/rubin/sim-data/ 
 --> sims_featureScheduler_runs3.3/baseline/baseline_v3.3_10yrs.db
 
+
+## Data
+
+Simulated galaxy and stellar SEDs are used to evaluate DCR 
+
 Original README by Matthew:
 dcr_utils.py is all the code that I used to make each plot.
 
