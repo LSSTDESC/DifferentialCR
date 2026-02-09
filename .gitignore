@@ -8,6 +8,8 @@ dp1_test.ipynb
 APIaccess.ipynb
 APIaccess.py
 dNdR.nb
+scrap.png
+scrap_SEDanalysis.ipynb
 
 # Ignore a folder
 # /data/large_files/
@@ -15,14 +17,13 @@ dNdR.nb
 /.ipynb_checkpoints/
 /COSMOS_SED/
 /Meeting_Notes/
-/__pychache__/
-
+/__pycache__/
+git
 # Ignore all .zip files
 *.db
 *.zip
 PSF_traces*.txt
-*scrap*
-
+*scrap*.ipynb
 
 # Ignore all files in a specific path
 # outputs/temp_results/
