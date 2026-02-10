@@ -1,7 +1,7 @@
 # Repository for developing and testing code to calculate differential chromatic refraction effects on survey data. 
 
-This repository is based on a project completed by Matthew Lugatiman (contact details below). 
-It has been uploaded to GitHub and further modified by Maya Redden (msredden@stanford.edu).
+This repository is based on a project started by Matthew Lugatiman (contact details below) who was exploring the impact of DCR in OpSims during the summer of 2024. 
+It has been uploaded to GitHub and further developed by Maya Redden (msredden@stanford.edu).
 
 ## Notebooks
 - `SEDAnalysis.ipynb` 

@@ -8,6 +8,8 @@ dp1_test.ipynb
 APIaccess.ipynb
 APIaccess.py
 dNdR.nb
+scrap.png
+scrap_SEDanalysis.ipynb
 
 # Ignore a folder
 # /data/large_files/
@@ -23,6 +25,7 @@ dNdR.nb
 PSF_traces*.txt
 *scrap*
 *.pyc
+*scrap*.ipynb
 
 # Ignore all files in a specific path
 # outputs/temp_results/
