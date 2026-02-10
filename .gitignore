@@ -14,15 +14,15 @@ dNdR.nb
 /scrap/
 /.ipynb_checkpoints/
 /COSMOS_SED/
-/Meeting_Notes/
-/__pychache__/
+/__pycache__/
 
 # Ignore all .zip files
 *.db
 *.zip
 PSF_traces*.txt
 *scrap*
-
+scrap.png
+*.DS_Store
 
 # Ignore all files in a specific path
 # outputs/temp_results/
