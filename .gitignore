@@ -18,6 +18,7 @@ scrap_SEDanalysis.ipynb
 /COSMOS_SED/
 /Meeting_Notes/
 /__pycache__/
+/dcr_interface/
 
 # Ignore all .zip files
 *.db
