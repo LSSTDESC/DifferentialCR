@@ -35,6 +35,7 @@ def parallactic_angle_from_radec(ra, dec, mjd, lat = -30.244633 * u.deg, lon = -
 
     # Earth location
     loc = EarthLocation(lat=lat, lon=lon, height=height)
+    print('loc', loc)
 
     # Local sidereal time at observer longitude (returns an Angle)
     lst = t.sidereal_time(kind=sidereal_kind, longitude=loc.lon)
@@ -46,6 +47,9 @@ def parallactic_angle_from_radec(ra, dec, mjd, lat = -30.244633 * u.deg, lon = -
     H_rad = H.to(u.rad).value
     phi = lat.to(u.rad).value
     delta = dec.to(u.rad).value
+    print('H_rad', H_rad)
+    print('phi', phi)
+    print('delta', delta)
 
     # Compute using arctan2 to get correct quadrant
     numerator = np.sin(H_rad)
@@ -56,6 +60,8 @@ def parallactic_angle_from_radec(ra, dec, mjd, lat = -30.244633 * u.deg, lon = -
 
     # normalize to (-180,180] or whatever you prefer — here we return angle wrapped to [-180,180)
     q = Angle(q).wrap_at(360*u.deg)
+
+    
     return q
 
 def rotateXYtoAA(Ixx, Iyy, Ixy, rotTelPos):
