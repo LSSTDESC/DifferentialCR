@@ -105,22 +105,41 @@ def weighted_avg_and_std(x_array, weights_dict, multi = False):
     values, weights -- Numpy ndarrays with the same shape.
     """
     x_transpose = np.array(x_array).T #create a vertical array for purposes of matrix multiplication below
+    x_flat = np.ravel(np.array(x_array))
 
     means = {}
     stdevs = {}
 
     if multi:
         for band, weights in weights_dict.items():
-            mean = np.sum(weights * x_transpose, axis = 1)/np.sum(weights, axis =1)
-            means[band] = mean
-            stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean[:, np.newaxis])**2, axis=1) / np.sum(weights, axis=1))
+            weights = np.array(weights)
+
+            if weights.ndim == 1:
+                if len(x_flat) != len(weights):
+                    raise ValueError(f"x_array and 1D weights for band '{band}' must have the same length")
+                mean = np.sum(weights * x_flat) / np.sum(weights)
+                means[band] = mean
+                stdevs[band] = np.sqrt(np.sum(weights * (x_flat - mean)**2) / np.sum(weights))
+            else:
+                mean = np.sum(weights * x_transpose, axis = 1)/np.sum(weights, axis =1)
+                means[band] = mean
+                stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean[:, np.newaxis])**2, axis=1) / np.sum(weights, axis=1))
 
             # print(f'{band} (average): mean = {np.round(np.mean(mean), 4)}, stdev = {np.round(np.mean(stdevs[band]), 4)}')
     else:
         for band, weights in weights_dict.items():
-            mean = np.sum(weights * x_transpose)/np.sum(weights)
-            means[band] = mean
-            stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean)**2) / np.sum(weights))
+            weights = np.array(weights)
+
+            if weights.ndim == 1:
+                if len(x_flat) != len(weights):
+                    raise ValueError(f"x_array and 1D weights for band '{band}' must have the same length")
+                mean = np.sum(weights * x_flat)/np.sum(weights)
+                means[band] = mean
+                stdevs[band] = np.sqrt(np.sum(weights * (x_flat - mean)**2) / np.sum(weights))
+            else:
+                mean = np.sum(weights * x_transpose)/np.sum(weights)
+                means[band] = mean
+                stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean)**2) / np.sum(weights))
         
 
     return means, stdevs
