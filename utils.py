@@ -105,41 +105,128 @@ def weighted_avg_and_std(x_array, weights_dict, multi = False):
     values, weights -- Numpy ndarrays with the same shape.
     """
     x_transpose = np.array(x_array).T #create a vertical array for purposes of matrix multiplication below
-    x_flat = np.ravel(np.array(x_array))
 
     means = {}
     stdevs = {}
 
     if multi:
         for band, weights in weights_dict.items():
-            weights = np.array(weights)
-
-            if weights.ndim == 1:
-                if len(x_flat) != len(weights):
-                    raise ValueError(f"x_array and 1D weights for band '{band}' must have the same length")
-                mean = np.sum(weights * x_flat) / np.sum(weights)
-                means[band] = mean
-                stdevs[band] = np.sqrt(np.sum(weights * (x_flat - mean)**2) / np.sum(weights))
-            else:
-                mean = np.sum(weights * x_transpose, axis = 1)/np.sum(weights, axis =1)
-                means[band] = mean
-                stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean[:, np.newaxis])**2, axis=1) / np.sum(weights, axis=1))
+            mean = np.sum(weights * x_transpose, axis = 1)/np.sum(weights, axis =1)
+            means[band] = mean
+            stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean[:, np.newaxis])**2, axis=1) / np.sum(weights, axis=1))
 
             # print(f'{band} (average): mean = {np.round(np.mean(mean), 4)}, stdev = {np.round(np.mean(stdevs[band]), 4)}')
     else:
         for band, weights in weights_dict.items():
-            weights = np.array(weights)
-
-            if weights.ndim == 1:
-                if len(x_flat) != len(weights):
-                    raise ValueError(f"x_array and 1D weights for band '{band}' must have the same length")
-                mean = np.sum(weights * x_flat)/np.sum(weights)
-                means[band] = mean
-                stdevs[band] = np.sqrt(np.sum(weights * (x_flat - mean)**2) / np.sum(weights))
-            else:
-                mean = np.sum(weights * x_transpose)/np.sum(weights)
-                means[band] = mean
-                stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean)**2) / np.sum(weights))
+            mean = np.sum(weights * x_transpose)/np.sum(weights)
+            means[band] = mean
+            stdevs[band] = np.sqrt(np.sum(weights * (x_transpose - mean)**2) / np.sum(weights))
         
 
     return means, stdevs
+
+
+def parallactic_angle_from_radec(ra, dec, mjd, lat = -30.244633 * u.deg, lon = -70.74941 * u.deg, height=2647*u.m * u.deg, sidereal_kind='apparent'):
+    """
+    Compute parallactic angle q (Angle) for given RA/Dec and observing site/time.
+
+    Parameters
+    ----------
+    ra : astropy.units.Quantity or array-like (angle) -- e.g. 120*u.deg or [..]*u.deg
+    dec: astropy.units.Quantity (angle)
+    mjd: float or array-like (MJD)
+    lat : astropy.units.Quantity (angle) -- observer latitude (positive north)
+    lon : astropy.units.Quantity (angle) -- observer longitude (east positive; astropy accepts this)
+    height: astropy.units.Quantity (length), optional, default 0*m
+    sidereal_kind: 'apparent' or 'mean' (which sidereal time to use)
+
+    Returns
+    -------
+    q : astropy.units.Quantity (angle) parallactic angle in radians (use .to(u.deg) to show degrees)
+    """
+    # ensure astropy Quantities
+    ra = Angle(ra)
+    dec = Angle(dec)
+    lat = Angle(lat)
+    lon = Angle(lon)
+
+    # Time object
+    t = Time(mjd, format='mjd', scale='utc')
+
+    # Earth location
+    loc = EarthLocation(lat=lat, lon=lon, height=height)
+
+    # Local sidereal time at observer longitude (returns an Angle)
+    lst = t.sidereal_time(kind=sidereal_kind, longitude=loc.lon)
+
+    # Hour angle H = LST - RA; wrap to [-180, 180) to keep sines/cosines numerically stable
+    H = (lst - ra).wrap_at(180*u.deg)
+
+    # Convert to radians for numpy trig
+    H_rad = H.to(u.rad).value
+    phi = lat.to(u.rad).value
+    delta = dec.to(u.rad).value
+
+    # Compute using arctan2 to get correct quadrant
+    numerator = np.sin(H_rad)
+    denominator = np.tan(phi) * np.cos(delta) - np.sin(delta) * np.cos(H_rad)
+
+    q_rad = np.arctan2(numerator, denominator)   # result in radians
+    q = q_rad * u.rad
+
+    # normalize to (-180,180] or whatever you prefer — here we return angle wrapped to [-180,180)
+    q = Angle(q).wrap_at(360*u.deg)
+    return q
+
+def parallactic_angle_from_radec_fast(table, lat = -30.244633 * u.deg, lon = -70.74941 * u.deg, height=2647*u.m * u.deg, sidereal_kind='mean'):
+    '''
+    Parallel version of the above function that takes in a table with columns 'ra_1', 'dec_1', and 'expMidptMJD'
+      and returns the table with the parallactic angle added as a new column 'q'
+    '''
+
+    loc = EarthLocation(lat = lat, lon = lon, height = height)
+
+    times = Time(table['expMidptMJD'], format = 'mjd', scale = 'utc')
+    lst = times.sidereal_time(kind = sidereal_kind, longitude = loc.lon)
+    HA = (lst - Angle(list(table['ra_1'])* u.deg)).wrap_at(180*u.deg)
+
+
+    H_rad = HA.to(u.rad).value
+    phi = Angle(lat * u.deg).to(u.rad).value #lat * np.pi/180
+    delta = Angle(np.array(table['dec_1'])*u.deg).to(u.rad).value #np.array(table['dec_1']) * np.pi/180
+
+    numerator = np.sin(H_rad)
+    denominator = np.tan(phi) * np.cos(delta) - np.sin(delta) * np.cos(H_rad)
+
+    q_rad = np.arctan2(numerator, denominator)   # result in radians
+    q = q_rad * u.rad
+
+    # normalize to (-180,180] or whatever you prefer — here we return angle wrapped to [-180,180)
+    q = Angle(q).wrap_at(360*u.deg)
+
+    table['q'] = q.value
+
+    return table
+
+def add_zenith_coordinates(table, lat=-30.244633, lon=-70.749417, height=2647):
+    """
+    Adds zenith RA/Dec coordinates for each row in the table.
+    Assumes columns 'expMidptMJD' for time.
+    """
+    location = EarthLocation(lat=lat*u.deg, lon=lon*u.deg, height=height*u.m)
+    zenith_ra = []
+    zenith_dec = []
+    for mjd in table['expMidptMJD']:
+        obstime = Time(mjd, format='mjd', scale='utc')
+        altaz = AltAz(alt=90*u.deg, az=0*u.deg, location=location, obstime=obstime)
+        zenith = SkyCoord(altaz)
+        zenith_icrs = zenith.transform_to('icrs')
+        zenith_ra.append(zenith_icrs.ra.deg)
+        zenith_dec.append(zenith_icrs.dec.deg)
+    table['zenith_ra'] = zenith_ra
+    table['zenith_dec'] = zenith_dec
+    return table
+
+
+def foo():
+    print('foo')
