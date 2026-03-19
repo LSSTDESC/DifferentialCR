@@ -228,5 +228,120 @@ def add_zenith_coordinates(table, lat=-30.244633, lon=-70.749417, height=2647):
     return table
 
 
+def print_dp1_object_summary(object_table, ra, dec):
+    """
+    Print a formatted summary for the nearest entry in a DP1 Object query result.
+
+    Parameters
+    ----------
+    object_table : astropy.table.Table
+        Table returned from a dp1.Object query.
+    ra, dec : float
+        Query coordinates in degrees.
+    """
+
+    def _safe_fmt(value, ndp=4):
+        try:
+            numeric_value = float(value)
+            if np.isfinite(numeric_value):
+                return f"{numeric_value:.{ndp}f}"
+        except Exception:
+            pass
+        return "nan"
+
+    def _safe_color(mag_a, mag_b):
+        try:
+            value_a = float(mag_a)
+            value_b = float(mag_b)
+            if np.isfinite(value_a) and np.isfinite(value_b):
+                return value_a - value_b
+        except Exception:
+            pass
+        return np.nan
+
+    if len(object_table) == 0:
+        print("No objects found in dp1.Object for this RA/Dec and search radius.")
+        return None
+
+    delta_ra = (np.array(object_table['coord_ra']) - ra) * np.cos(np.deg2rad(dec))
+    delta_dec = np.array(object_table['coord_dec']) - dec
+    sep_arcsec = np.sqrt(delta_ra**2 + delta_dec**2) * 3600
+
+    nearest_index = int(np.argmin(sep_arcsec))
+    nearest_object = object_table[nearest_index]
+
+    magnitudes = {
+        'u': nearest_object['u_cModelMag'],
+        'g': nearest_object['g_cModelMag'],
+        'r': nearest_object['r_cModelMag'],
+        'i': nearest_object['i_cModelMag'],
+        'z': nearest_object['z_cModelMag'],
+        'y': nearest_object['y_cModelMag'],
+    }
+
+    colors = {
+        'u-g': _safe_color(magnitudes['u'], magnitudes['g']),
+        'g-r': _safe_color(magnitudes['g'], magnitudes['r']),
+        'r-i': _safe_color(magnitudes['r'], magnitudes['i']),
+        'i-z': _safe_color(magnitudes['i'], magnitudes['z']),
+        'z-y': _safe_color(magnitudes['z'], magnitudes['y']),
+    }
+
+    ref_extendedness = nearest_object['refExtendedness']
+    size_extendedness = nearest_object['refSizeExtendedness']
+    try:
+        is_extended = bool(ref_extendedness > 0.5)
+    except Exception:
+        is_extended = False
+
+    print("=" * 68)
+    print("DP1 Object Summary (nearest match in search region)")
+    print("=" * 68)
+    print(f"Query position (deg):  RA={ra:.8f}, Dec={dec:.8f}")
+    print(
+        f"Matched position (deg): RA={_safe_fmt(nearest_object['coord_ra'], 8)}, Dec={_safe_fmt(nearest_object['coord_dec'], 8)}"
+    )
+    print(f"Separation:            {_safe_fmt(sep_arcsec[nearest_index], 3)} arcsec")
+    print(f"Object ID:             {nearest_object['objectId']}")
+    print(f"Tract/Patch:           {nearest_object['tract']} / {nearest_object['patch']}")
+    print("-")
+    print("Morphology")
+    print(f"  Extended (refExtendedness > 0.5): {is_extended}")
+    print(f"  refExtendedness:      {_safe_fmt(ref_extendedness, 4)}")
+    print(f"  refSizeExtendedness:  {_safe_fmt(size_extendedness, 4)}")
+    print(
+        "  shape_xx, shape_xy, shape_yy: "
+        f"{_safe_fmt(nearest_object['shape_xx'], 5)}, "
+        f"{_safe_fmt(nearest_object['shape_xy'], 5)}, "
+        f"{_safe_fmt(nearest_object['shape_yy'], 5)}"
+    )
+    print("-")
+    print("cModel Magnitudes")
+    print(
+        "  u={u}, g={g}, r={r}, i={i}, z={z}, y={y}".format(
+            u=_safe_fmt(magnitudes['u'], 4),
+            g=_safe_fmt(magnitudes['g'], 4),
+            r=_safe_fmt(magnitudes['r'], 4),
+            i=_safe_fmt(magnitudes['i'], 4),
+            z=_safe_fmt(magnitudes['z'], 4),
+            y=_safe_fmt(magnitudes['y'], 4),
+        )
+    )
+    print("-")
+    print("Colors (cModel)")
+    print(
+        "  u-g={ug}, g-r={gr}, r-i={ri}, i-z={iz}, z-y={zy}".format(
+            ug=_safe_fmt(colors['u-g'], 4),
+            gr=_safe_fmt(colors['g-r'], 4),
+            ri=_safe_fmt(colors['r-i'], 4),
+            iz=_safe_fmt(colors['i-z'], 4),
+            zy=_safe_fmt(colors['z-y'], 4),
+        )
+    )
+    print("=" * 68)
+
+    return nearest_object
+
+
 def foo():
     print('foo')
