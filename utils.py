@@ -343,5 +343,29 @@ def print_dp1_object_summary(object_table, ra, dec):
     return nearest_object
 
 
+
+
+def rebin(x, y, stepsize = None, newx_edges = None):
+
+    if newx_edges is None:        
+        newx_edges = np.arange(min(x), max(x) + stepsize, stepsize)
+    
+    newx = newx_edges[0:-1] + (newx_edges[1:] - newx_edges[0:-1])/2
+        
+
+    binned_data = np.zeros(len(newx_edges) - 1)    
+    binned_err = np.zeros(len(newx_edges) - 1)
+
+    bin_ind = np.digitize(x, newx_edges) - 1
+    
+    for i in range(len(binned_data)):
+        mask = bin_ind == i
+        newx[i] = np.mean(x[mask])
+        binned_data[i] = np.mean(y[mask])
+        binned_err[i] = np.std(y[mask])/np.sqrt(np.sum(mask))
+
+    return newx, binned_data, binned_err
+
+    
 def foo():
     print('foo')
