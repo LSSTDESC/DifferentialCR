@@ -27,6 +27,7 @@ PSF_traces*.txt
 *scrap*
 *.pyc
 *scrap*.ipynb
+*.invalid
 
 # Ignore all files in a specific path
 # outputs/temp_results/
