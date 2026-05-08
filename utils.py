@@ -366,6 +366,33 @@ def rebin(x, y, stepsize = None, newx_edges = None):
 
     return newx, binned_data, binned_err
 
+
+
+def add_parallactic_angle(table, ra_col = 'ra', dec_col = 'dec', expMidptMJD_col = 'expMidptMJD', lat = -30.244633,lon = -70.749417, height = 2647):
+    # Calculate the parallactic angle and add to the table
+    
+    loc = EarthLocation(lat = lat * u.deg, lon = lon * u.deg, height = height * u.m)
+    
+    times = Time(table[expMidptMJD_col], format = 'mjd', scale = 'utc')
+    lst = times.sidereal_time(kind = 'mean', longitude = loc.lon)
+    HA = (lst - Angle(list(table[ra_col])* u.deg)).wrap_at(180*u.deg)
+    
+    H_rad = HA.to(u.rad).value
+    phi = Angle(lat * u.deg).to(u.rad).value #lat * np.pi/180
+    delta = Angle(np.array(table[dec_col])*u.deg).to(u.rad).value #np.array(master['dec_1']) * np.pi/180
+    
+    numerator = np.sin(H_rad)
+    denominator = np.tan(phi) * np.cos(delta) - np.sin(delta) * np.cos(H_rad)
+    
+    q_rad = np.arctan2(numerator, denominator)   # result in radians
+    q = q_rad * u.rad
+    
+    # normalize to (-180,180] or whatever you prefer — here we return angle wrapped to [-180,180)
+    q = Angle(q).wrap_at(360*u.deg)
+
+    table['q'] = q.value
+
+    return table
     
 def foo():
     print('foo')
