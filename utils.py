@@ -23,7 +23,7 @@ def apply_filter(wvl, data, band = 'g', rm_leakage = True):
     '''
     wvl - a list of the wavelengths in nm
     data - a N x M list of SEDs, N = number of SEDs, M = len of wvl
-    returns data with the band filter applied to each SED
+    returns data with the band filter applied to each SEDwvl
     '''
     
     filter_file = f'filter_files/total_{band}.dat'
