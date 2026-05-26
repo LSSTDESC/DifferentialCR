@@ -31,7 +31,7 @@ def apply_filter(wvl, data, band = 'g', rm_leakage = True):
 
     # remove filter leakage: set lower bound of filter to 0.001 throughput
     if rm_leakage:
-        leakage_mask = filter_band[1] < 0.001
+        leakage_mask = filter_band[1] < 0.002
         filter_band[1][leakage_mask] = np.zeros(np.sum(leakage_mask))
     
     func = interp1d(filter_band[0], filter_band[1])
@@ -46,18 +46,20 @@ import astropy.units as u
 
 
 def BB(wave, temp, scale):
+    # returns blackbody flux in units of erg/cm^2/s/A
     temp = temp * u.K
     wave = wave * u.nm
     scale = scale * u.erg / (u.cm**2 * u.s * u.AA * u.sr)
 
     bb = BlackBody(temperature = temp, scale = scale)
+
     return bb(wave).value
 
 
 def apply_DCR(wave, filtered_data, zenith, pressure, temperature, H2O_pressure):
     '''
     wave - list of wavelength points
-    filtered_data - dictionary, keys: bands, items: list of flux throughputs for each SED as viewed in that band 
+    filtered_data - dictionary, keys: bands, items: list of flux densities each SED as viewed in that band 
 
     Takes in SED data with the filter throughputs already applied, returns refraction_angles (mapped from wave) and filtered_refracted_data (the flux density over refraction angles)
 
@@ -180,7 +182,7 @@ def parallactic_angle_from_radec(ra, dec, mjd, lat = -30.244633 * u.deg, lon = -
 
 def parallactic_angle_from_radec_fast(table, lat = -30.244633 * u.deg, lon = -70.74941 * u.deg, height=2647*u.m * u.deg, sidereal_kind='mean'):
     '''
-    Parallel version of the above function that takes in a table with columns 'ra_1', 'dec_1', and 'expMidptMJD'
+    Parallel version of the above function that takes in a table with columns 'ra', 'dec', and 'expMidptMJD'
       and returns the table with the parallactic angle added as a new column 'q'
     '''
 
@@ -188,12 +190,12 @@ def parallactic_angle_from_radec_fast(table, lat = -30.244633 * u.deg, lon = -70
 
     times = Time(table['expMidptMJD'], format = 'mjd', scale = 'utc')
     lst = times.sidereal_time(kind = sidereal_kind, longitude = loc.lon)
-    HA = (lst - Angle(list(table['ra_1'])* u.deg)).wrap_at(180*u.deg)
+    HA = (lst - Angle(list(table['ra'])* u.deg)).wrap_at(180*u.deg)
 
 
     H_rad = HA.to(u.rad).value
     phi = Angle(lat * u.deg).to(u.rad).value #lat * np.pi/180
-    delta = Angle(np.array(table['dec_1'])*u.deg).to(u.rad).value #np.array(table['dec_1']) * np.pi/180
+    delta = Angle(np.array(table['dec'])*u.deg).to(u.rad).value #np.array(table['dec_1']) * np.pi/180
 
     numerator = np.sin(H_rad)
     denominator = np.tan(phi) * np.cos(delta) - np.sin(delta) * np.cos(H_rad)
@@ -393,6 +395,39 @@ def add_parallactic_angle(table, ra_col = 'ra', dec_col = 'dec', expMidptMJD_col
     table['q'] = q.value
 
     return table
+
+
+def synth_fnu(wl, Flam, band, wl_units = 'nm', clean_filters = True):
+    '''
+    Calculates a synthetic flux
+    wl - wavelength array in apropriate units (see wl_units)
+    Flam - SED (unfiltered) in in erg/cm^2/s/A
+    wl_units - 'nm' or 'A'
+    '''
     
+    if wl_units == 'nm':
+        wl_A = wl * 10
+        wl_nm = wl
+    elif wl_units == 'A':
+        wl_A = wl
+        wl_nm = wl/10
+
+    if clean_filters == True:
+        filter_file = f'filter_files/noleak_{band}.dat'
+    else:
+        filter_file = f'filter_files/total_{band}.dat'
+        
+    filter_band = np.loadtxt(filter_file).T #filter_band[0] -> wavelengths, filter_band[1] -> filter pass fraction
+
+    T = interp1d(filter_band[0], filter_band[1])(wl_nm)
+
+    num = np.trapezoid(Flam * T * wl_A, wl_A)
+    den = np.trapezoid(T / wl_A, wl_A)
+    
+    return num / den   # proportional to <f_nu>
+
+
 def foo():
     print('foo')
+
+    
