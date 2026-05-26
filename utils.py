@@ -99,10 +99,46 @@ def apply_DCR(wave, filtered_data, zenith, pressure, temperature, H2O_pressure):
     return refraction_angles, filtered_refracted_data
 
 
+def mean_and_std(x_array, weights_dict, param_array = [None], multi = False):
+    '''
+    Returns the expectation (mean) and square root of the variance (std) of param_array: <param> and <(param - mean)^2>
+    x_array : array to integrate over
+    weights_dict : dictionary of distributions 
+    param_array: parameter to find the mean and std of (default = x_array)
+    multi : boolean, sets if there are multiple distributions in each dictionary entry to integrate
+
+    '''
+    
+    if param_array[0] == None:
+        param_array = x_array
+    
+    x_transpose = np.array(param_array).T #create a vertical array for purposes of matrix multiplication below
+
+    means = {}
+    stdevs = {}
+
+    if multi:
+        for band, weights in weights_dict.items():
+            mean = np.trapezoid(x = x_array,y =  weights * x_transpose, axis = 1)/np.trapezoid(x = x_array, y = weights, axis =1)
+            means[band] = mean
+            stdevs[band] = np.sqrt(np.trapezoid(x = x_array, y = weights * (x_transpose - mean[:, np.newaxis])**2, axis=1) / np.trapezoid(x = x_array, y = weights, axis=1))
+
+            # print(f'{band} (average): mean = {np.round(np.mean(mean), 4)}, stdev = {np.round(np.mean(stdevs[band]), 4)}')
+    else:
+        for band, weights in weights_dict.items():
+            mean = np.trapezoid(x = x_array, y = weights * x_transpose)/np.trapezoid(x = x_array, y = weights)
+            means[band] = mean
+            stdevs[band] = np.sqrt(np.trapezoid(x = x_array, y = weights * (x_transpose - mean)**2) / np.trapezoid(x = x_array,y = weights))
+        
+
+    return means, stdevs
+    
 def weighted_avg_and_std(x_array, weights_dict, multi = False):
 
     """
+    Don't use, deprecated and only works if x_array is uniformly sampled. mean_and_std() is much more reliable
     Return the weighted average and standard deviation.
+
 
     values, weights -- Numpy ndarrays with the same shape.
     """
