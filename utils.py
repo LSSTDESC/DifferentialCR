@@ -19,7 +19,7 @@ from scipy.optimize import curve_fit
 from scipy import integrate
 
 
-def apply_filter(wvl, data, band = 'g', rm_leakage = True):
+def apply_filter(wvl, data, band = 'g', rm_leakage = True, cutoff = 0.002):
     '''
     wvl - a list of the wavelengths in nm
     data - a N x M list of SEDs, N = number of SEDs, M = len of wvl
@@ -31,7 +31,7 @@ def apply_filter(wvl, data, band = 'g', rm_leakage = True):
 
     # remove filter leakage: set lower bound of filter to 0.001 throughput
     if rm_leakage:
-        leakage_mask = filter_band[1] < 0.002
+        leakage_mask = filter_band[1] < cutoff
         filter_band[1][leakage_mask] = np.zeros(np.sum(leakage_mask))
     
     func = interp1d(filter_band[0], filter_band[1])
