@@ -20,6 +20,7 @@ quickQuery.ipynb
 /Meeting_Notes/
 /__pycache__/
 /dcr_interface/
+/usdf/
 
 # Ignore all .zip files
 *.db

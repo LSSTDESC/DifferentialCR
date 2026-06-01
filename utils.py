@@ -11,7 +11,7 @@ import astropy.units as u
 from astropy.time import Time
 from astropy.coordinates import EarthLocation, Angle, AltAz, SkyCoord
 
-import gala.coordinates as gc
+# import gala.coordinates as gc
 import astropy.coordinates as coord
 
 from scipy.optimize import curve_fit
