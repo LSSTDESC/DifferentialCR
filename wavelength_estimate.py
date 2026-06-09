@@ -124,7 +124,7 @@ def BB(wave, temp, scale):
 
 
 
-def generate_templates(reference_temperature = 4500, sigma = 100, gaussian = False):
+def generate_templates(reference_temperature = 4500, sigma = 100, gaussian = False, raw_wavelengths = False):
 
     # generate a bunch of template SEDs with well defined mean wavelengths (gaussian profiles)
 
@@ -145,7 +145,14 @@ def generate_templates(reference_temperature = 4500, sigma = 100, gaussian = Fal
     for band in 'ugrizy':
         filtered_SEDs[band] = apply_filter(wavelengths, SEDs , band = band)
 
-    mean_wavelength, std_wavelength = weighted_avg_and_std(wavelengths, filtered_SEDs, multi = True)
+
+    if raw_wavelengths:
+        band_edges = {'u': [334., 400.], 'g': [395., 560.], 'r': [542., 699.], 'i': [680., 831.], 'z' :[807., 931.], 'y' :[ 916., 1054.]}
+        edgecut_SEDs = {}
+        for band in 'ugrizy':
+            
+    else:
+        mean_wavelength, std_wavelength = weighted_avg_and_std(wavelengths, filtered_SEDs, multi = True)
 
     # plt.plot(wavelengths, mean_wavelength['u'], label = 'g mean wavelength', color = 'blue')
     # plt.ylabel('Weighted Mean Wavelength (Angstroms)')
