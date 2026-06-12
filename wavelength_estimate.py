@@ -9,26 +9,26 @@ from scipy.interpolate import interp1d
 
 colors = {'u' : 'purple', 'g':'blue', 'r': 'green', 'i': 'orange', 'z' : 'magenta', 'y' : 'red'}
 
+from utils import apply_filter
+# def apply_filter(wvl, data, band = 'g', rm_leakage = True):
+#     '''
+#     wvl - a list of the wavelengths in angstroms
+#     data - a N x M list of SEDs, N = number of SEDs, M = len of wvl
+#     returns data with the band filter applied to each SED
+#     '''
+    
+#     filter_file = f'filter_files/total_{band}.dat'
+#     filter_band = np.loadtxt(filter_file).T #filter_band[0] -> wavelengths, filter_band[1] -> filter pass fraction
 
-def apply_filter(wvl, data, band = 'g', rm_leakage = True):
-    '''
-    wvl - a list of the wavelengths in angstroms
-    data - a N x M list of SEDs, N = number of SEDs, M = len of wvl
-    returns data with the band filter applied to each SED
-    '''
+#     # remove filter leakage: set lower bound of filter to 0.001 throughput
+#     if rm_leakage:
+#         leakage_mask = filter_band[1] < 0.001
+#         filter_band[1][leakage_mask] = np.zeros(np.sum(leakage_mask))
     
-    filter_file = f'filter_files/total_{band}.dat'
-    filter_band = np.loadtxt(filter_file).T #filter_band[0] -> wavelengths, filter_band[1] -> filter pass fraction
-
-    # remove filter leakage: set lower bound of filter to 0.001 throughput
-    if rm_leakage:
-        leakage_mask = filter_band[1] < 0.001
-        filter_band[1][leakage_mask] = np.zeros(np.sum(leakage_mask))
+#     func = interp1d(filter_band[0], filter_band[1])
+#     SED_filter = func(wvl)
     
-    func = interp1d(filter_band[0], filter_band[1])
-    SED_filter = func(wvl)
-    
-    return data * SED_filter
+#     return data * SED_filter
     
 
 #Pat and Josh's paper atmospheric conditions 
@@ -149,7 +149,7 @@ def generate_templates(reference_temperature = 4500, sigma = 100, gaussian = Fal
     if raw_wavelengths:
         band_edges = {'u': [334., 400.], 'g': [395., 560.], 'r': [542., 699.], 'i': [680., 831.], 'z' :[807., 931.], 'y' :[ 916., 1054.]}
         edgecut_SEDs = {}
-        for band in 'ugrizy':
+        # for band in 'ugrizy':
             
     else:
         mean_wavelength, std_wavelength = weighted_avg_and_std(wavelengths, filtered_SEDs, multi = True)

@@ -18,6 +18,12 @@ from scipy.optimize import curve_fit
 
 from scipy import integrate
 
+import os
+
+# Get the directory where THIS utils file lives
+_UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 
 def apply_filter(wvl, data, band = 'g', rm_leakage = True, cutoff = 0.002):
     '''
@@ -26,7 +32,7 @@ def apply_filter(wvl, data, band = 'g', rm_leakage = True, cutoff = 0.002):
     returns data with the band filter applied to each SEDwvl
     '''
     
-    filter_file = f'filter_files/total_{band}.dat'
+    filter_file = os.path.join(_UTILS_DIR, f'filter_files/total_{band}.dat')
     filter_band = np.loadtxt(filter_file).T #filter_band[0] -> wavelengths, filter_band[1] -> filter pass fraction
 
     # remove filter leakage: set lower bound of filter to 0.001 throughput
@@ -38,6 +44,7 @@ def apply_filter(wvl, data, band = 'g', rm_leakage = True, cutoff = 0.002):
     SED_filter = func(wvl)
     
     return data * SED_filter
+
 
 
 from astropy.modeling.models import BlackBody
