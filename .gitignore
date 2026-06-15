@@ -21,6 +21,7 @@ quickQuery.ipynb
 /__pycache__/
 /dcr_interface/
 /usdf/
+/db\ files/
 
 # Ignore all .zip files
 *.db
