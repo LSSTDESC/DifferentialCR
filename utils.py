@@ -390,7 +390,7 @@ def print_dp1_object_summary(object_table, ra, dec):
 
 
 
-def rebin(x, y, stepsize = None, newx_edges = None):
+def rebin(x, y, stepsize = None, newx_edges = None, median = True):
 
     if newx_edges is None:        
         newx_edges = np.arange(min(x), max(x) + stepsize, stepsize)
@@ -405,8 +405,12 @@ def rebin(x, y, stepsize = None, newx_edges = None):
     
     for i in range(len(binned_data)):
         mask = bin_ind == i
-        newx[i] = np.mean(x[mask])
-        binned_data[i] = np.mean(y[mask])
+        if median:
+            newx[i] = np.median(x[mask])
+            binned_data[i] = np.median(y[mask])
+        else:
+            newx[i] = np.mean(x[mask])
+            binned_data[i] = np.mean(y[mask])
         binned_err[i] = np.std(y[mask])/np.sqrt(np.sum(mask))
 
     return newx, binned_data, binned_err
