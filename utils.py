@@ -474,7 +474,54 @@ def synth_fnu(wl, Flam, band, wl_units = 'nm', clean_filters = True):
     return num / den   # proportional to <f_nu>
 
 
+import matplotlib.patches as mpatches
+
+def plot_ellipse(ixx, iyy, ixy, center=(0, 0), scale=1, ax=None, **kwargs):
+    """
+    Plot an ellipse defined by second moments ixx, iyy, ixy.
+
+    The covariance matrix [[ixx, ixy], [ixy, iyy]] is diagonalized to get
+    the semi-axes (sqrt of eigenvalues) and orientation angle.
+
+    Parameters
+    ----------
+    ixx, iyy, ixy : float
+        Second moments (same units, e.g. arcsec² or pix²).
+    center : (float, float)
+        (x, y) center of the ellipse.
+    scale : float
+        Multiply semi-axes by this factor (e.g. scale=2 for a 2-sigma ellipse).
+    ax : matplotlib Axes, optional
+        Axes to draw on; defaults to current axes.
+    **kwargs
+        Passed to matplotlib.patches.Ellipse (e.g. color, alpha, fill).
+    """
+    if ax is None:
+        ax = plt.gca()
+
+    cov = np.array([[ixx, ixy], [ixy, iyy]])
+    eigvals, eigvecs = np.linalg.eigh(cov)          # eigenvalues in ascending order
+    eigvals = np.maximum(eigvals, 0)                 # guard against tiny negatives
+    semi_minor, semi_major = np.sqrt(eigvals) * scale
+    # angle of the major axis (eigvec corresponding to largest eigenvalue)
+    angle_rad = np.arctan2(eigvecs[1, 1], eigvecs[0, 1])
+    angle_deg = np.degrees(angle_rad)
+
+    kwargs.setdefault('fill', False)
+    kwargs.setdefault('edgecolor', 'k')
+    ellipse = mpatches.Ellipse(
+        xy=center,
+        width=2 * semi_major,
+        height=2 * semi_minor,
+        angle=angle_deg,
+        **kwargs
+    )
+    ax.add_patch(ellipse)
+    return ellipse
+
+
 def foo():
+    
     print('foo')
 
     
