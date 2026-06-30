@@ -520,6 +520,127 @@ def plot_ellipse(ixx, iyy, ixy, center=(0, 0), scale=1, ax=None, **kwargs):
     return ellipse
 
 
+def radec_to_altaz(
+    ra: float,
+    dec: float,
+    mjd: float,
+    lon: float = -70.749417,
+    lat: float = -30.244633,
+    elevation: float =  2647.0,
+) -> tuple[float, float]:
+    """
+    Convert RA/Dec sky coordinates to Alt/Az for a given time and observatory.
+
+    Parameters
+    ----------
+    ra : float
+        Right ascension in degrees (ICRS).
+    dec : float
+        Declination in degrees (ICRS).
+    mjd : float
+        Observation time in Modified Julian Date (MJD).
+    lon : float
+        Observatory longitude in degrees (east-positive).
+    lat : float
+        Observatory latitude in degrees.
+    elevation : float, optional
+        Observatory elevation in meters above sea level (default 0).
+
+    Returns
+    -------
+    alt : float
+        Altitude in degrees (0 = horizon, 90 = zenith).
+    az : float
+        Azimuth in degrees (north=0, east=90).
+    """
+    # Build the sky coordinate in ICRS
+    sky_coord = SkyCoord(ra=ra * u.deg, dec=dec * u.deg, frame="icrs")
+
+    # Build the observer location
+    location = EarthLocation(lon=lon * u.deg, lat=lat * u.deg, height=elevation * u.m)
+
+    # Build the observation time from MJD
+    obs_time = Time(mjd, format="mjd", scale="utc")
+
+    # Define the AltAz frame at this time and location
+    altaz_frame = AltAz(obstime=obs_time, location=location)
+
+    # Transform
+    altaz_coord = sky_coord.transform_to(altaz_frame)
+
+    return altaz_coord.alt.deg, altaz_coord.az.deg
+
+
+def radec_to_altaz_vectorized(
+    ra,
+    dec,
+    mjd,
+    lon: float = -70.749417,
+    lat: float = -30.244633,
+    elevation: float = 2647.0,
+    location: EarthLocation | None = None,
+    chunk_size: int | None = None,
+):
+    """
+    Vectorized RA/Dec -> Alt/Az transform for long equal-length arrays.
+
+    Parameters
+    ----------
+    ra, dec, mjd : array-like
+        Arrays of the same shape. Angles are in degrees, time in MJD.
+    lon, lat, elevation : float
+        Site longitude/latitude in degrees and elevation in meters.
+    location : astropy.coordinates.EarthLocation, optional
+        Reuse a pre-built location to avoid repeated object construction.
+    chunk_size : int, optional
+        If set, process in chunks of this size to reduce peak memory use.
+
+    Returns
+    -------
+    alt, az : np.ndarray
+        Altitude and azimuth in degrees with the same shape as inputs.
+    """
+    ra_arr = np.asarray(ra, dtype=float)
+    dec_arr = np.asarray(dec, dtype=float)
+    mjd_arr = np.asarray(mjd, dtype=float)
+
+    if ra_arr.shape != dec_arr.shape or ra_arr.shape != mjd_arr.shape:
+        raise ValueError("ra, dec, and mjd must have identical shapes")
+
+    flat_ra = ra_arr.ravel()
+    flat_dec = dec_arr.ravel()
+    flat_mjd = mjd_arr.ravel()
+
+    if location is None:
+        location = EarthLocation(lon=lon * u.deg, lat=lat * u.deg, height=elevation * u.m)
+
+    alt_out = np.empty_like(flat_ra, dtype=float)
+    az_out = np.empty_like(flat_ra, dtype=float)
+
+    if chunk_size is None:
+        sky = SkyCoord(ra=flat_ra * u.deg, dec=flat_dec * u.deg, frame="icrs")
+        obs_time = Time(flat_mjd, format="mjd", scale="utc")
+        frame = AltAz(obstime=obs_time, location=location)
+        altaz = sky.transform_to(frame)
+        alt_out[:] = altaz.alt.deg
+        az_out[:] = altaz.az.deg
+    else:
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be a positive integer")
+
+        for start in range(0, flat_ra.size, chunk_size):
+            stop = min(start + chunk_size, flat_ra.size)
+            sky = SkyCoord(ra=flat_ra[start:stop] * u.deg, dec=flat_dec[start:stop] * u.deg, frame="icrs")
+            obs_time = Time(flat_mjd[start:stop], format="mjd", scale="utc")
+            frame = AltAz(obstime=obs_time, location=location)
+            altaz = sky.transform_to(frame)
+            alt_out[start:stop] = altaz.alt.deg
+            az_out[start:stop] = altaz.az.deg
+
+    return alt_out.reshape(ra_arr.shape), az_out.reshape(ra_arr.shape)
+
+    
+
 def foo():
     
     print('foo')
