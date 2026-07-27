@@ -149,7 +149,13 @@ def generate_templates(reference_temperature = 4500, sigma = 100, gaussian = Fal
     if raw_wavelengths:
         band_edges = {'u': [334., 400.], 'g': [395., 560.], 'r': [542., 699.], 'i': [680., 831.], 'z' :[807., 931.], 'y' :[ 916., 1054.]}
         edgecut_SEDs = {}
-        # for band in 'ugrizy':
+        
+        for band in 'ugrizy':
+                    band_mask = (wavelengths > band_edges[band][0]) * (wavelengths < band_edges[band][1])
+                    edgecut_SEDs[band] = SEDs[:]
+                    edgecut_SEDs[band][~band_mask] = 0
+
+        mean_wavelength, std_wavelength = weighted_avg_and_std(wavelengths, edgecut_SEDs, multi = True)
             
     else:
         mean_wavelength, std_wavelength = weighted_avg_and_std(wavelengths, filtered_SEDs, multi = True)
