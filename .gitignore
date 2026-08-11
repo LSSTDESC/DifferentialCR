@@ -31,6 +31,7 @@ PSF_traces*.txt
 *.pyc
 *scrap*.ipynb
 *.invalid
+FGCM_Background.pdf
 
 # Ignore all files in a specific path
 # outputs/temp_results/
